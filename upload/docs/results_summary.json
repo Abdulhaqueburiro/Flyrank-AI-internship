@@ -1,0 +1,37 @@
+{
+  "train_cutoff": "2026-05-05",
+  "test_cutoff": "2026-06-02",
+  "n_train": 57302,
+  "n_test": 54566,
+  "pos_rate_train": 0.4233,
+  "pos_rate_test": 0.4206,
+  "test_pages_seen_in_train_pct": 83.1,
+  "results": [
+    {
+      "model": "Persistence rule",
+      "ROC-AUC": 0.7416,
+      "PR-AUC": 0.6113,
+      "P@1000": 0.589,
+      "ROC-AUC unseen pages": 0.7258
+    },
+    {
+      "model": "Logistic regression",
+      "ROC-AUC": 0.7372,
+      "PR-AUC": 0.5955,
+      "P@1000": 0.552,
+      "ROC-AUC unseen pages": 0.7345
+    },
+    {
+      "model": "LightGBM",
+      "ROC-AUC": 0.7775,
+      "PR-AUC": 0.7104,
+      "P@1000": 0.961,
+      "ROC-AUC unseen pages": 0.7644
+    }
+  ],
+  "roc_gain_mean": 0.036,
+  "roc_gain_ci95": [
+    0.0335,
+    0.0386
+  ]
+}

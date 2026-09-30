@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Which visible pages under-capture clicks next? A CTR opportunity-scoring study</title>
+<meta name="description" content="Capstone research paper, FlyRank ML Internship: ranking pages that are likely to under-capture clicks in the next window.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fbfbf9; --ink:#1c2530; --muted:#5b6673; --rule:#dfe3e6;
+  --accent:#0f5c63; --accent-soft:#e3f0f0; --note:#f3f5f7;
+  --serif:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+:root:not([data-theme="light"]){}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#12171c;--ink:#e6eaee;--muted:#9aa5b1;--rule:#28313a;--accent:#6cc4cb;--accent-soft:#17303a;--note:#1a2229;}
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:1.5rem}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif);font-size:1.075rem;line-height:1.7}
+.layout{max-width:1080px;margin:0 auto;padding:2.5rem 1.25rem 5rem;display:grid;grid-template-columns:210px minmax(0,1fr);gap:3.5rem}
+nav{position:sticky;top:2rem;align-self:start;font-family:var(--sans);font-size:.88rem}
+nav p{margin:0 0 .6rem;color:var(--muted);font-weight:600}
+nav a{display:block;padding:.28rem 0 .28rem .8rem;color:var(--muted);text-decoration:none;border-left:2px solid var(--rule)}
+nav a:hover,nav a:focus-visible{color:var(--accent);border-left-color:var(--accent);outline:none}
+main{max-width:680px}
+h1{font-family:var(--sans);font-weight:600;font-size:clamp(1.8rem,4.2vw,2.5rem);line-height:1.18;letter-spacing:-.02em;margin:0 0 .8rem}
+h2{font-family:var(--sans);font-weight:600;font-size:1.35rem;margin:3rem 0 .6rem;padding-top:1.4rem;border-top:1px solid var(--rule)}
+h3{font-family:var(--sans);font-weight:600;font-size:1.02rem;margin:1.6rem 0 .3rem}
+.byline{font-family:var(--sans);color:var(--muted);font-size:.92rem;margin:0 0 2rem}
+.abstract{background:var(--accent-soft);border-left:4px solid var(--accent);padding:1.1rem 1.3rem;margin:1.5rem 0}
+.abstract p{margin:.3rem 0}
+.note{background:var(--note);border:1px solid var(--rule);padding:.9rem 1.1rem;font-family:var(--sans);font-size:.92rem;color:var(--muted);margin:1.2rem 0}
+figure{margin:1.6rem 0}
+figure img{max-width:100%;height:auto;border:1px solid var(--rule);background:#fff}
+figcaption{font-family:var(--sans);font-size:.85rem;color:var(--muted);margin-top:.4rem}
+.scroll{overflow-x:auto;margin:1rem 0}
+table{border-collapse:collapse;width:100%;font-family:var(--sans);font-size:.88rem;min-width:420px}
+th,td{padding:.55rem .7rem;text-align:left;border-bottom:1px solid var(--rule)}
+th{font-weight:600;background:var(--note)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em;background:var(--note);padding:.05em .3em;border-radius:3px}
+a{color:var(--accent)}
+.todo{background:#fff4c2;color:#5a4a00;padding:0 .25em;border-radius:2px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .todo{background:#4a3f00;color:#ffe680}}
+footer{font-family:var(--sans);font-size:.85rem;color:var(--muted);margin-top:4rem;border-top:1px solid var(--rule);padding-top:1rem}
+@media (max-width:820px){.layout{grid-template-columns:1fr;gap:1rem}nav{position:static}nav a{display:inline-block;margin-right:.9rem;border-left:0;padding:.2rem 0}}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav aria-label="Sections">
+  <p>Contents</p>
+  <a href="#abstract">Abstract</a>
+  <a href="#intro">Problem statement</a>
+  <a href="#data">Data</a>
+  <a href="#method">Methodology</a>
+  <a href="#results">Results</a>
+  <a href="#limits">Limitations</a>
+  <a href="#recs">Recommendations</a>
+  <a href="#repro">Reproducibility</a>
+  <a href="#credits">Acknowledgments</a>
+</nav>
+<main>
+<header id="abstract">
+  <h1>Which visible pages under-capture clicks next? A CTR opportunity-scoring study</h1>
+  <p class="byline">Abdul Haque, FlyRank AI Internship, Machine Learning track. September 2026</p>
+  <div class="abstract">
+    <p><strong>Abstract.</strong></p>
+    <p>Content teams can review only a limited number of pages each month, so we ask which already-visible pages are likely to under-capture clicks in the next 28 days. We use daily page-level Search Console metrics from the FlyRank ML Internship warehouse (April to June 2026, about 271,000 pages) and define under-capture as a CTR below 75% of the median for pages at a similar position. Features from a past 28-day window are used to predict this label in the following window, with a time-aware split (train cutoff 5 May 2026, test cutoff 2 June 2026). On the later test window, LightGBM reached ROC-AUC 0.778 and Precision@1000 of 0.961, against 0.742 and 0.589 for a persistence rule that ranks pages by past CTR ratio. The output is a ranked review list with reason codes; results are observed and directional, on one test window, and do not show cause or how Google ranks pages.</p>
+  </div>
+</header>
+
+<section id="intro">
+  <h2>Introduction and problem statement</h2>
+  <p>A content team can usually review a few dozen pages a month. Pages that already appear in visible positions but earn fewer clicks than similar pages are natural candidates for a metadata or search-intent review, because fixing them does not require winning a higher ranking first. The decision this work supports is: <em>which pages should a reviewer open first?</em></p>
+  <p>The obvious shortcut is to assume last month's under-performers stay under-performers. This study tests whether a model that also uses volume, position and trend information ranks pages better than that shortcut. A wrong recommendation costs reviewer time, so the ranking is judged mostly by how precise the top of the list is.</p>
+</section>
+
+<section id="data">
+  <h2>Data</h2>
+  <p>The study uses the FlyRank ML Internship warehouse release on Hugging Face, table <code>fact_content_daily_performance</code>, monthly partitions April to June 2026 (91 days). Columns used: report date, hashed content ID, Search Console impressions, clicks and average position. Rows are kept only where Search Console data is available and impressions are above zero, which leaves about 12.15 million page-day rows covering about 271,000 pages.</p>
+  <h3>Inclusion and exclusions</h3>
+  <p>Only about a third of rows in the release carry Search Console data, so the rest are excluded. Within each window a page must have at least 100 impressions and an average position of 20 or better in <em>both</em> the past and the future window; low-volume pages give unstable CTR. This leaves 57,302 pages for training and 54,566 for testing. A further 286 training pages were removed because their position bucket had a median CTR of zero, which makes the peer ratio undefined.</p>
+  <div class="note">All identifiers in the release are hashed, and page IDs shown here are re-hashed. No client names, domains, URLs, private queries, credentials or raw exports appear in this paper or the repository.</div>
+</section>
+
+<section id="method">
+  <h2>Methodology</h2>
+  <h3>Label definition</h3>
+  <p>For a cutoff date <em>T</em>, features use <code>[T&minus;28, T)</code> and the label uses <code>[T, T+28)</code>. Pages are grouped into position buckets (1 to 1.5, 1.5 to 3, 3 to 5, 5 to 8, 8 to 12, 12 to 20). A page is <em>under-capturing</em> if its CTR in the label window is below 75% of the median CTR of pages in the same bucket and window. The positive rate is 42.3% in training and 42.1% in testing, so a random ranking would be right about 42% of the time.</p>
+  <h3>Features</h3>
+  <p>Impressions, clicks, CTR, impression-weighted average position, position bucket, days with data, CTR ratio versus peers, and impression trend (second half of the past window over the first half).</p>
+  <h3>Baselines and model</h3>
+  <p>The persistence rule ranks pages by their past CTR ratio, lowest first. The second baseline is logistic regression on scaled features (log impressions, log trend, CTR ratio capped at 10). The main model is LightGBM with 300 trees, learning rate 0.05 and seed 42.</p>
+  <h3>Validation and leakage checks</h3>
+  <p>The model is trained on cutoff 5 May 2026 (features 7 April to 4 May, label 5 May to 1 June) and tested on cutoff 2 June 2026 (features 5 May to 1 June, label 2 June to 29 June). Every feature window ends before its label window starts, and the test label window begins after training ends. Because 83.1% of test pages also appear in the training frame (in an earlier window), results are also reported on the 9,471 test pages not seen in training.</p>
+</section>
+
+<section id="results">
+  <h2>Results</h2>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Model</th><th class="num">ROC-AUC</th><th class="num">PR-AUC</th><th class="num">Precision@1000</th><th class="num">ROC-AUC, unseen pages</th></tr></thead>
+    <tbody>
+      <tr><td>Persistence rule</td><td class="num">0.742</td><td class="num">0.611</td><td class="num">0.589</td><td class="num">0.726</td></tr>
+      <tr><td>Logistic regression</td><td class="num">0.737</td><td class="num">0.596</td><td class="num">0.552</td><td class="num">0.735</td></tr>
+      <tr><td>LightGBM</td><td class="num"><strong>0.778</strong></td><td class="num"><strong>0.710</strong></td><td class="num"><strong>0.961</strong></td><td class="num"><strong>0.764</strong></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Base rate on the test window: 42.1%. LightGBM beat the persistence rule on every measure, including on pages not seen in training. The ROC-AUC gain was 0.036 (bootstrap 95% interval 0.034 to 0.039, resampling test pages). Logistic regression did not improve on the persistence rule overall.</p>
+  <figure>
+    <img src="figures/fig2_model_vs_baseline.png" alt="Bar chart comparing ROC-AUC, PR-AUC and Precision at 1000 for the persistence rule, logistic regression and LightGBM on the test window">
+    <figcaption>Model versus baselines on the same later test window. The dashed line is the base rate.</figcaption>
+  </figure>
+  <p>The largest difference is at the top of the ranking: among LightGBM's 1,000 highest-risk pages, 96.1% did under-capture, versus 58.9% for the persistence rule. These 1,000 pages are not typical. Their median impressions were 16,798 against 1,130 for all test pages, and 88% sit in the position 5 to 12 range. Precision@1000 therefore describes high-volume pages in mid-page positions, not all pages.</p>
+  <figure>
+    <img src="figures/fig1_undercapture_by_bucket.png" alt="Bar chart of the share of pages that under-capture clicks in each position bucket">
+    <figcaption>Under-capture rate by position bucket in the training window.</figcaption>
+  </figure>
+  <figure>
+    <img src="figures/fig3_feature_importance.png" alt="Horizontal bar chart of LightGBM feature importance">
+    <figcaption>Features LightGBM split on most often. Importance shows use by the model, not cause.</figcaption>
+  </figure>
+</section>
+
+<section id="limits">
+  <h2>Limitations and honest framing</h2>
+  <p>Findings are <strong>observed</strong> on one data release, one training window and one test window (June 2026). The bootstrap interval reflects sampling of pages only; it does not cover other months, and pages from the same client are not independent, so the true uncertainty is larger than the interval suggests. Signals are <strong>directional</strong>: they show association, not cause. The output is <strong>decision-support</strong>: it tells a reviewer where to look first.</p>
+  <p>The label compares each page with peers in the same window, so it depends on that window's peer median, which is not known in advance. CTR also depends on search-result features, brand queries and intent that this data does not capture. Some of the highest-priority pages show very low CTR at strong average positions; this may reflect real snippet problems, but it may also come from how position is averaged across many queries, so each flagged page needs a manual look before any change. Nothing here proves how Google ranks pages or that a change to a page would cause a change in clicks.</p>
+</section>
+
+<section id="recs">
+  <h2>Ranked recommendations</h2>
+  <p>Priority multiplies the model's risk score by an opportunity value (impressions times the shortfall in CTR versus peers), so pages with both high risk and high volume come first. Page IDs are hashed. The top 20 are in <a href="top_recommendations_hashed.csv"><code>top_recommendations_hashed.csv</code></a>. The most common reason codes on the test window were: declining impressions (20,029 pages), low CTR for position (19,823), growing impressions (18,355), high impressions (13,645), model-only signal (6,571) and high visibility (5,569). A page can carry several codes.</p>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Reason code</th><th>What it means</th><th>Suggested review</th></tr></thead>
+    <tbody>
+      <tr><td><code>LOW_CTR_FOR_POSITION</code> + <code>HIGH_VISIBILITY</code></td><td>CTR below peers at position 5 or better</td><td>Review title and description for click appeal, and check the query mix</td></tr>
+      <tr><td><code>LOW_CTR_FOR_POSITION</code> + <code>DECLINING_IMPRESSIONS</code></td><td>Low CTR while demand or visibility falls</td><td>Review freshness and search-intent match</td></tr>
+      <tr><td><code>LOW_CTR_FOR_POSITION</code> + <code>HIGH_IMPRESSIONS</code></td><td>Large volume at stake</td><td>Review first: each CTR point is worth the most clicks</td></tr>
+      <tr><td><code>MODEL_ONLY_SIGNAL</code></td><td>Model flags risk without a rule-based reason</td><td>Monitor and re-score next month</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <ul>
+    <li>Start the review queue from the ranked list, not from last month's low-CTR list; on this data the ranking was more precise at the top.</li>
+    <li>Spend reviewer time on high-impression pages in mid-page positions first, where the model was most reliable.</li>
+    <li>Re-run the scoring each month and compare against what happened, since this study covers one test window.</li>
+  </ul>
+</section>
+
+<section id="repro">
+  <h2>Reproducibility</h2>
+  <p>Notebook: <a href="https://github.com/Abdulhaqueburiro/Flyrank-AI-internship/blob/main/work/capstone.ipynb">work/capstone.ipynb</a>. Repository: <a href="https://github.com/Abdulhaqueburiro/Flyrank-AI-internship">github.com/Abdulhaqueburiro/Flyrank-AI-internship</a>. Access to the dataset requires a Hugging Face read token; the notebook reads it from a secret, never from the code. Random seed: 42.</p>
+</section>
+
+<section id="credits">
+  <h2>Acknowledgments and data credit</h2>
+  <p>Built on the FlyRank ML Internship dataset, <a href="https://flyrank.ai" target="_blank" rel="noopener">https://flyrank.ai</a>. Thanks to the FlyRank team and the ML track mentors.</p>
+</section>
+
+<footer>Capstone for the FlyRank AI Internship. Observed, directional, decision-support.</footer>
+</main>
+</div>
+</body>
+</html>
